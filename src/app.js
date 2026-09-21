@@ -17,10 +17,27 @@ const jobRoutes = require('./routes/jobRoutes');
 const app = express();
 
 app.use(helmet());
+
+const allowedOrigins = new Set([
+  ...env.clientOrigins,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://rentalfront.vercel.app',
+]);
+
 app.use(
   cors({
-    origin: env.clientUrl,
+    origin(origin, callback) {
+      // Allow non-browser clients (no Origin header)
+      if (!origin || allowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
+      console.warn(`CORS blocked origin: ${origin}`);
+      return callback(null, false);
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
